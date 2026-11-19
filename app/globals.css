@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html, body { @apply bg-paper text-ink antialiased; }
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-paper-line bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm transition hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply border-ink bg-ink text-white hover:bg-ink-soft; }
+  .btn-cue { @apply border-cue bg-cue text-white hover:opacity-90; }
+  .btn-ghost { @apply border-transparent bg-transparent shadow-none hover:bg-black/5; }
+  .btn-danger { @apply border-red-200 bg-white text-red-700 hover:bg-red-50; }
+  .btn-sm { @apply px-2 py-1 text-xs; }
+  .input { @apply w-full rounded-md border border-paper-line bg-white px-2.5 py-1.5 text-sm outline-none ring-cue/30 placeholder:text-ink-mute focus:border-cue focus:ring-2; }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-mute; }
+  .card { @apply rounded-lg border border-paper-line bg-paper-card shadow-sm; }
+  .chip { @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold; }
+  .h-page { @apply text-xl font-bold tracking-tight sm:text-2xl; }
+  .table-sm { @apply w-full border-collapse text-sm; }
+  .table-sm th { @apply sticky top-0 z-10 border-b border-paper-line bg-paper px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-mute; }
+  .table-sm td { @apply border-b border-paper-line px-2 py-1.5 align-top; }
+}
+
+/* Print: hide app chrome everywhere, print views add their own layout */
+@media print {
+  .no-print { display: none !important; }
+  html, body { background: #fff !important; }
+  @page { margin: 12mm; }
+}
