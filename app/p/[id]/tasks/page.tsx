@@ -19,7 +19,7 @@ const PRIORITY_TONE: Record<TaskPriority, string> = {
 };
 
 export default function TasksPage() {
-  const { production, isHead, canEdit, me, memberName, members } = useProduction();
+  const { production, isHead, canEdit, me, memberName, membersAZ } = useProduction();
   const tasks = useRows<Task>("tasks", production.id, { order: [{ column: "due_date" }, { column: "created_at" }] });
   const [filter, setFilter] = useState<"all" | "mine">(isHead ? "all" : "mine");
   const [assignee, setAssignee] = useState("");
@@ -42,7 +42,7 @@ export default function TasksPage() {
             {filter === "all" && (
               <select className="input w-44" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
                 <option value="">Everyone</option>
-                {members.rows.map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
+                {membersAZ.map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
               </select>
             )}
             {canEdit && <button className="btn btn-primary" onClick={() => setEditing("new")}>{isHead ? "+ Assign task" : "+ Add task"}</button>}
@@ -113,14 +113,14 @@ export default function TasksPage() {
 function TaskEditor({ task, onClose, onSave, onDelete }: {
   task: Task | null; onClose: () => void; onSave: (p: Partial<Task>) => Promise<void>; onDelete?: () => void;
 }) {
-  const { isHead, me, members, userId } = useProduction();
+  const { isHead, me, membersAZ, userId } = useProduction();
   const editable = !task || isHead || task.created_by === userId;
   const [f, setF] = useState<Partial<Task>>(task ?? {
     title: "", description: "", assignee_id: isHead ? null : me?.id ?? null, due_date: null,
     priority: "normal", status: "todo", department: "Stage Management", created_by: userId,
   });
   const [err, setErr] = useState<string | null>(null);
-  const assignees = isHead ? members.rows : members.rows.filter((m) => m.id === me?.id);
+  const assignees = isHead ? membersAZ : membersAZ.filter((m) => m.id === me?.id);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

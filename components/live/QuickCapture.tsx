@@ -20,7 +20,7 @@ const remember = (k: string, v?: string) => {
 export const QuickCapture = forwardRef<QuickCaptureHandle, {
   date?: string; modes?: CaptureMode[]; initial?: CaptureMode; compact?: boolean; onSaved?: () => void;
 }>(function QuickCapture({ date = todayISO(), modes = ["note", "prop", "line", "task"], initial, compact, onSaved }, ref) {
-  const { production, characters, members, isHead, me, userId, canEdit } = useProduction();
+  const { production, characters, membersAZ, isHead, me, userId, canEdit } = useProduction();
   const [mode, setMode] = useState<CaptureMode>(initial ?? modes[0]);
   const [text, setText] = useState("");
   const [dept, setDept] = useState("summary");
@@ -94,7 +94,7 @@ export const QuickCapture = forwardRef<QuickCaptureHandle, {
         {mode === "task" && (
           <select className="input sm:w-44" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
             {isHead && <option value="">Unassigned</option>}
-            {(isHead ? members.rows : members.rows.filter((m) => m.id === me?.id)).map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
+            {(isHead ? membersAZ : membersAZ.filter((m) => m.id === me?.id)).map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
           </select>
         )}
         <textarea

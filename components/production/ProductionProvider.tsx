@@ -16,6 +16,9 @@ type Ctx = {
   members: ReturnType<typeof useRows<Member>>;
   characters: ReturnType<typeof useRows<Character>>;
   memberName: (id?: string | null) => string;
+  /** A–Z lists for every dropdown */
+  membersAZ: Member[];
+  charactersAZ: Character[];
 };
 
 const ProductionCtx = createContext<Ctx | null>(null);
@@ -65,6 +68,8 @@ export function ProductionProvider({ productionId, children }: { productionId: s
       members,
       characters,
       memberName: (id) => members.rows.find((m) => m.id === id)?.display_name ?? "",
+      membersAZ: [...members.rows].sort((a, b) => a.display_name.localeCompare(b.display_name, undefined, { sensitivity: "base" })),
+      charactersAZ: [...characters.rows].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" })),
     };
   }, [production, userId, me, members, characters]);
 

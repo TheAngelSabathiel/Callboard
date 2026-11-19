@@ -238,9 +238,9 @@ function BulkMembers({ open, onClose }: { open: boolean; onClose: () => void }) 
 }
 
 function Cast() {
-  const { production, characters, members, canEdit } = useProduction();
+  const { production, characters, membersAZ, canEdit } = useProduction();
   const [names, setNames] = useState("");
-  const actors = members.rows;
+  const actors = membersAZ;
   async function addMany() {
     const list = names.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     await characters.insertMany(list.map((name, i) => ({ production_id: production.id, name, sort_order: characters.rows.length + i })));

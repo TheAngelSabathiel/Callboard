@@ -12,7 +12,7 @@ import { fmtDate, todayISO } from "@/lib/utils";
 const ISSUES = ["Dropped line", "Paraphrased", "Wrong word", "Added words", "Jumped cue", "Called for line", "Out of order", "Late entrance"];
 
 export default function LineNotesPage() {
-  const { production, canEdit, characters, members } = useProduction();
+  const { production, canEdit, characters, members, charactersAZ } = useProduction();
   const notes = useRows<LineNote>("line_notes", production.id, { order: [{ column: "date", ascending: false }, { column: "sort_order" }] });
   const [date, setDate] = useState(todayISO());
   const [who, setWho] = useState("");
@@ -20,7 +20,7 @@ export default function LineNotesPage() {
   const dates = Array.from(new Set(notes.rows.map((n) => n.date))).sort().reverse();
 
   const columns: GridColumn<LineNote>[] = [
-    { key: "character", label: "Character", width: 150, type: "select", options: characters.rows.map((c) => ({ value: c.name, label: c.name })) },
+    { key: "character", label: "Character", width: 150, type: "select", options: charactersAZ.map((c) => ({ value: c.name, label: c.name })) },
     { key: "page", label: "Pg", width: 60 },
     { key: "line", label: "Line as written", width: 320, type: "multiline" },
     { key: "issue", label: "Issue", width: 140, type: "select", options: ISSUES.map((i) => ({ value: i, label: i })) },
@@ -55,7 +55,7 @@ export default function LineNotesPage() {
         <Field label="Character">
           <select className="input" value={who} onChange={(e) => setWho(e.target.value)}>
             <option value="">Everyone</option>
-            {characters.rows.map((c) => <option key={c.id}>{c.name}</option>)}
+            {charactersAZ.map((c) => <option key={c.id}>{c.name}</option>)}
           </select>
         </Field>
         {dates.length > 0 && <p className="text-xs text-ink-mute">Dates with notes: {dates.slice(0, 8).map((d) => <button key={d} className="mr-1 underline" onClick={() => setDate(d)}>{fmtDate(d, { month: "short", day: "numeric" })}</button>)}</p>}

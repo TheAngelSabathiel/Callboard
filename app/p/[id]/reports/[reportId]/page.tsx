@@ -200,7 +200,7 @@ function SectionEditor({ section, editable, editors, onFocus, onSave, onDelete, 
 function AttendancePanel({ reportId, attendance, editable, meeting }: {
   reportId: string; attendance: ReturnType<typeof useRows<Attendance>>; editable: boolean; meeting: boolean;
 }) {
-  const { production, members, characters } = useProduction();
+  const { production, members, characters, membersAZ } = useProduction();
   const [add, setAdd] = useState("");
   const listed = new Set(attendance.rows.map((a) => a.member_id));
   const rows = useMemo(() => [...attendance.rows].sort((a, b) => {
@@ -241,7 +241,7 @@ function AttendancePanel({ reportId, attendance, editable, meeting }: {
         <div className="mt-3 flex flex-wrap gap-2">
           <select className="input w-56" value={add} onChange={async (e) => { setAdd(""); if (e.target.value) await addMany([e.target.value]); }}>
             <option value="">+ Add person…</option>
-            {members.rows.filter((m) => !listed.has(m.id)).map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
+            {membersAZ.filter((m) => !listed.has(m.id)).map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
           </select>
           <button className="btn btn-sm" onClick={() => addMany(members.rows.filter((m) => m.role === "actor" || m.department === "Cast").map((m) => m.id))}>Add all cast</button>
           <button className="btn btn-sm" onClick={() => addMany(members.rows.filter((m) => ["head_sm", "sm", "asm", "director", "production_manager"].includes(m.role)).map((m) => m.id))}>Add production team</button>
