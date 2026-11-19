@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { toast } from "@/lib/notify";
@@ -55,6 +56,8 @@ export function ActivityBell({ dark }: { dark?: boolean }) {
   const [perm, setPerm] = useState<string>("default");
   const lastToast = useRef(new Map<string, number>());
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     try { setSeen(localStorage.getItem(seenKey) ?? ""); } catch { /* private mode */ }
@@ -92,7 +95,10 @@ export function ActivityBell({ dark }: { dark?: boolean }) {
 
   useEffect(() => {
     if (!open) return;
-    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!ref.current?.contains(t) && !panelRef.current?.contains(t)) setOpen(false);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
@@ -101,6 +107,13 @@ export function ActivityBell({ dark }: { dark?: boolean }) {
 
   function toggle() {
     const next = !open;
+    if (next && ref.current) {
+      // Panel is rendered in <body> with fixed position so the sidebar can't clip it
+      const r = ref.current.getBoundingClientRect();
+      const width = Math.min(384, window.innerWidth - 16);
+      const left = Math.min(Math.max(8, dark ? r.right + 8 : r.right - width), window.innerWidth - width - 8);
+      setPos({ top: dark ? r.top : r.bottom + 8, left });
+    }
     setOpen(next);
     if (next) {
       const now = new Date().toISOString();
@@ -116,8 +129,9 @@ export function ActivityBell({ dark }: { dark?: boolean }) {
         🔔
         {unread > 0 && <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-cue px-1 text-center text-[10px] font-bold text-white">{unread > 99 ? "99+" : unread}</span>}
       </button>
-      {open && (
-        <div className={cx("card fixed inset-x-2 top-14 z-50 max-h-[70vh] overflow-y-auto p-2 sm:absolute sm:inset-x-auto sm:top-10 sm:w-96", dark ? "sm:left-0" : "sm:right-0")}>
+      {open && pos && typeof document !== "undefined" && createPortal(
+        <div ref={panelRef} style={{ top: pos.top, left: pos.left, width: Math.min(384, window.innerWidth - 16) }}
+          className="card no-print fixed z-[70] max-h-[75vh] overflow-y-auto p-2 shadow-xl">
           <div className="mb-1 flex items-center justify-between px-2">
             <p className="text-sm font-bold text-ink">Team activity</p>
             {perm !== "granted" && typeof Notification !== "undefined" && perm !== "denied" && (
@@ -138,7 +152,7 @@ export function ActivityBell({ dark }: { dark?: boolean }) {
             </Link>
           ))}
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }
