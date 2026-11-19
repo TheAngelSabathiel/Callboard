@@ -29,20 +29,34 @@ export default function CompanyPage() {
 }
 
 function InviteButton({ m }: { m: Member }) {
-  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  const [state, setState] = useState<"idle" | "busy" | "sent">("idle");
+  const [link, setLink] = useState<string | null>(null);
   if (m.user_id || !m.email) return null;
+
+  async function call(mode: "email" | "link") {
+    setState("busy");
+    const res = await fetch("/api/invite", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ memberId: m.id, mode }) });
+    const j = (await res.json().catch(() => ({}))) as { error?: string; link?: string };
+    if (!res.ok) { notify.error(j.error ?? "Invite failed"); setState("idle"); return; }
+    if (mode === "link" && j.link) {
+      setLink(j.link);
+      try { await navigator.clipboard.writeText(j.link); notify.info("Invite link copied", `Send it to ${m.display_name} by chat. It works once.`); }
+      catch { notify.info("Invite link ready", "Copy it from the box."); }
+      setState("idle");
+      return;
+    }
+    notify.info("Invite email sent", m.email ?? "");
+    setState("sent");
+  }
+
   return (
-    <button className="btn btn-sm mt-1" disabled={state !== "idle"} title="Send a Supabase invite email with a link to set a password"
-      onClick={async () => {
-        setState("sending");
-        const res = await fetch("/api/invite", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ memberId: m.id }) });
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
-        if (!res.ok) { notify.error(j.error ?? "Invite failed"); setState("idle"); return; }
-        notify.info("Invite sent", m.email ?? "");
-        setState("sent");
-      }}>
-      {state === "sending" ? "Sending…" : state === "sent" ? "Invite sent ✓" : "✉ Send invite"}
-    </button>
+    <div className="mt-1 space-y-1">
+      <div className="flex flex-wrap gap-1">
+        <button className="btn btn-sm" disabled={state === "busy"} title="One-time sign-in link to send by Messenger / Viber / SMS. No email needed." onClick={() => call("link")}>🔗 Copy invite link</button>
+        <button className="btn btn-sm" disabled={state !== "idle"} title="Supabase emails the invite (needs custom SMTP for people outside your Supabase team)" onClick={() => call("email")}>{state === "sent" ? "Emailed ✓" : "✉ Email"}</button>
+      </div>
+      {link && <input readOnly className="input py-0.5 text-[10px]" value={link} onFocus={(e) => e.target.select()} />}
+    </div>
   );
 }
 
@@ -92,7 +106,7 @@ function Directory() {
       </div>
       {isHead && (
         <p className="text-xs text-ink-mute">
-          Add people by email. {inviteEnabled ? "Use ✉ Send invite to email them a sign-in link, or send" : "Send"} them <code className="rounded bg-white px-1">{signupLink}</code>; signing up with that same email links them automatically.
+          Add people by email. {inviteEnabled ? "Use 🔗 Copy invite link (send it by chat) or ✉ Email, or send" : "Send"} them <code className="rounded bg-white px-1">{signupLink}</code>; signing up with that same email links them automatically.
         </p>
       )}
       <ErrorNote msg={members.error} />

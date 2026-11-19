@@ -39,7 +39,7 @@ export const HELP: Record<string, HelpTopic> = {
     title: "Company & Cast",
     intro: "Everyone on the production, their contact details and app access, plus characters with actor and alternate.",
     tips: [
-      "Add someone's email, then tap ✉ Send invite: they get an email, set a password and see the show. The badge changes from “Invite pending” to “Linked”.",
+      "Add someone's email, then tap 🔗 Copy invite link and send it by chat (or ✉ Email): they open it, set a password and see the show. The badge changes from “Invite pending” to “Linked”.",
       "Head SM / SM / ASM can edit schedules, reports, script and cues. Everyone else reads, and updates their own availability.",
       "Paste from sheet: copy rows of Position · Name · Email · Phone from Excel or Google Sheets.",
       "Calendar called lists use the Cast tab, so give every character an actor.",

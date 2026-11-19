@@ -4,7 +4,7 @@ A web app for theater stage managers: company directory, tasks, rehearsal calend
 
 Built with Next.js (App Router) and Supabase, deployed on Vercel, and works on phones.
 
-**Current build: Phase 9 · New Supabase API keys (publishable + secret)**
+**Current build: Phase 10 · New Supabase API keys + email-free invites**
 
 > **Built to update the book *during* rehearsal**, so you don't spend another hour after rehearsal cleaning up notes, props and blocking. Open **Rehearsal Mode** when the room starts. Every note, prop, line note and attendance tap lands in the right place as it happens, and the day's report is already written when you call "thank you, that's rehearsal."
 
@@ -27,14 +27,20 @@ Contents
 3. **Authentication → URL Configuration**
    - Site URL: your Vercel address, e.g. `https://callboard-yourname.vercel.app`
    - Redirect URLs: add `https://YOUR-DOMAIN/**` and `http://localhost:3000/**`
-4. **Authentication → Providers → Email**: keep it on. While testing you can turn off "Confirm email" so new accounts work right away.
-5. **Authentication → Email Templates** (needed for **✉ Send invite**; recommended for the others). Set each link to the app's `/auth/confirm` handler:
-
-| Template | Link (replace the `href` in the template) |
-|---|---|
-| Invite user | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/auth/reset` |
-| Confirm signup | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/dashboard` |
-| Reset password | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/reset` |
+4. **Authentication → Sign In / Providers → Email**: keep it on (see 6 for "Confirm email").
+5. **Emails: no template editing needed.** The app reads Supabase's default email links as they are (`/auth/confirm` handles invite, confirmation and reset links). The "Set up custom SMTP to edit templates" notice on the Emails page can be ignored.
+6. **Know the limits of Supabase's built-in email sender** (free, no setup):
+   - It only delivers to members of your **Supabase organization's team**. Anyone else gets *"Email address not authorized"*.
+   - It sends at most about **2 emails per hour** for the whole project.
+   - So for a real company, either:
+     - **A. No email at all (recommended to start):**
+       - *Authentication → Sign In / Providers → Email* → turn **off "Confirm email"**, so people can sign up at `/signup` right away.
+       - To invite someone, the Head SM uses **🔗 Copy invite link** in *Company & Cast* and sends the link by Messenger / Viber / SMS. This needs the secret key (1.2) but **no SMTP**. Each link works once.
+     - **B. Real emails:** in *Authentication → Emails*, click **Set up SMTP** and connect a provider (Brevo, Resend, SendGrid, Gmail with an app password, etc.).
+       - This removes the team-only rule and raises the limit to 30/hour (adjustable in *Rate Limits*).
+       - After that, **✉ Email** invites, sign-up confirmations and password-reset emails reach everyone.
+       - Custom templates are optional. If you edit them, keep the link as `{{ .ConfirmationURL }}`.
+   - **Forgot password** also uses email, so with option A only team members get reset emails. A Head SM can still use **🔗 Copy invite link** for someone who hasn't signed in yet.
 
 ### 1.2 API keys (publishable + secret)
 Supabase is retiring the legacy `anon` and `service_role` keys (early 2027). **This app uses only the new keys.** There is no anon or service_role key anywhere in the code.
@@ -48,7 +54,7 @@ Supabase is retiring the legacy `anon` and `service_role` keys (early 2027). **T
 | Key | Env variable | Where it runs | Used for |
 |---|---|---|---|
 | Publishable `sb_publishable_…` | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | browser + server | everything users do (RLS enforced) |
-| Secret `sb_secret_…` | `SUPABASE_SECRET_KEY` | server only (`lib/supabase/admin.ts`, `server-only` guarded) | **✉ Send invite** emails (Company & Cast) and the database check at `/api/health`. Optional: without it, those two features switch off and everything else works. |
+| Secret `sb_secret_…` | `SUPABASE_SECRET_KEY` | server only (`lib/supabase/admin.ts`, `server-only` guarded) | **🔗 Copy invite link** / **✉ Email** invites (Company & Cast) and the database check at `/api/health`. Optional: without it, those features switch off and everything else works. |
 
 Rules the code enforces:
 - The app **refuses to start** (clear message instead of a crash) if the publishable key is missing, or isn't an `sb_publishable_` key, or if a secret key was pasted into it.
@@ -139,7 +145,7 @@ The day's report is created automatically (linked to the calendar item) the firs
 
 - Rules are enforced by the database (Row Level Security), not just hidden buttons.
 - A production always keeps at least one Head SM with an account. To hand over, promote someone else to Head SM first.
-- **To give someone access:** add them in *Company & Cast* with their email, then tap **✉ Send invite**. They get an email, set a password and land on the dashboard. (Or send them your site's `/signup` link: signing up with the same email links them automatically.)
+- **To give someone access:** add them in *Company & Cast* with their email, then tap **🔗 Copy invite link** and send it by chat (or **✉ Email** if custom SMTP is set up). They open it, set a password and land on the dashboard. Or send them your site's `/signup` link: signing up with the same email links them automatically.
 - Anyone except a Head SM can leave a production from *Settings → Leave production*.
 
 ### 2.2 Productions: new, next, finished
@@ -293,8 +299,10 @@ Import order is always directory → availability → calendar → breakdown, so
 | Sign-up email link goes to localhost | Set *Site URL* and *Redirect URLs* in Supabase (1.1.3) and `NEXT_PUBLIC_SITE_URL` on Vercel. |
 | Page says "Callboard is not configured yet" | A Supabase variable is missing or holds the wrong kind of key. Fix it in Vercel (1.3) and **Redeploy**. |
 | "Legacy API keys are disabled" / 401 errors | You're still using an old anon key somewhere. Use the `sb_publishable_` key in `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and redeploy. |
-| No **✉ Send invite** button | `SUPABASE_SECRET_KEY` isn't set (or isn't `sb_secret_…`). Check `/api/health`. Only the Head SM sees the button, and only for people with an email and no account yet. |
-| Invite link opens the login page with an error | Update the **Invite user** email template (1.1.5). Links also expire, so send the invite again. |
+| No **🔗 Copy invite link / ✉ Email** buttons | `SUPABASE_SECRET_KEY` isn't set (or isn't `sb_secret_…`). Check `/api/health`. Only the Head SM sees them, and only for people with an email and no account yet. |
+| "Email address not authorized" / invite email never arrives | Supabase's built-in sender only emails your Supabase team (about 2 per hour). Use **🔗 Copy invite link**, or set up custom SMTP (1.1.6). |
+| "This link didn't work" | Invite links are single-use and expire. Copy a new one. Also check that *Redirect URLs* includes `https://YOUR-DOMAIN/**`. |
+| Sign-up says "check your email" but nothing arrives | Turn off **Confirm email** (1.1.6 A) or set up custom SMTP. |
 | "A production needs at least one Head SM…" | Promote another person to Head SM before changing or removing the current one. |
 | Imported "Called" names went to block notes | Those names aren't characters yet. Add them in *Cast* (with an actor), then pick them in the agenda. |
 | Availability dates are a year off | Re-import with the correct *Year of the first month*. Imports overwrite matching person/date cells. |
@@ -419,6 +427,12 @@ Goal: SMs update props, blocking, notes and attendance **during** rehearsal, not
 - **`/api/health`**: deployment check (URL, key formats, secret-key exposure, schema, notifications table) without revealing any values
 - No database changes
 
+### ✅ Phase 10 · Email without template edits
+- `/auth/confirm` is now a client page that understands Supabase's **default** email links (hash tokens from invites, `?code=` from sign-up and reset, `?token_hash=` if templates are customized), so no template editing or custom SMTP is required
+- **🔗 Copy invite link** (`generateLink`, secret key, Head SM only): a one-time invite link to send by chat. Works with Supabase's built-in email limits because no email is sent
+- Clear messages when the built-in sender refuses ("not authorized", rate limit)
+- README 1.1 explains the two setups: no-email (Confirm email off + invite links) or custom SMTP
+
 ---
 
 ## 5. Project structure
@@ -439,7 +453,7 @@ app/
     print/[kind]/          printable views for every export
   api/invite/              Head SM sends invite emails (secret key)
   api/health/              deployment check
-  auth/confirm/            email link handler (invite / confirm / reset)
+  auth/confirm/            email link page (default Supabase links: invite / confirm / reset)
 components/                ui (PageHeader + HelpButton), Toaster, EditableGrid, breakdown,
                            production/ (shell, provider, ActivityBell), live/ (QuickCapture, FAB),
                            schedule/, reports/, script/, export/
@@ -469,7 +483,7 @@ app/account/page.tsx
 app/api/health/route.ts
 app/api/invite/route.ts
 app/auth/callback/route.ts
-app/auth/confirm/route.ts
+app/auth/confirm/page.tsx
 app/auth/reset/page.tsx
 app/auth/signout/route.ts
 app/dashboard/page.tsx
