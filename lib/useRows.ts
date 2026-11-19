@@ -7,7 +7,7 @@ import { notify } from "./notify";
 export const TABLE_LABEL: Record<string, string> = {
   tasks: "Task", members: "Person", characters: "Character", events: "Calendar item", event_blocks: "Agenda block",
   availability: "Availability", reports: "Report", report_sections: "Report note", attendance: "Attendance",
-  scripts: "Script", script_marks: "Script mark", cues: "Cue", scenes: "Breakdown row", props: "Prop", line_notes: "Line note",
+  scripts: "Script", script_marks: "Script mark", cues: "Cue", scenes: "Breakdown row", props: "Prop", line_notes: "Line note", links: "Link",
 };
 // Deleting these also deletes child rows, so they are not offered an Undo.
 const NO_UNDO = new Set(["events", "reports", "scripts", "members", "productions"]);
@@ -177,5 +177,25 @@ export function useRows<T extends { id: string }>(table: string, value: string |
     } : undefined);
   }, [table, load, doNotify, label, select, sortRows]);
 
-  return { rows, setRows, loading, error, setError, reload: load, insert, insertMany, update, upsert, remove };
+  /** Delete many rows at once, with one Undo for the whole batch. */
+  const removeMany = useCallback(async (ids: string[]) => {
+    if (!ids.length) return;
+    const snapshots = rowsRef.current.filter((r) => ids.includes(r.id));
+    setRows((cur) => cur.filter((r) => !ids.includes(r.id)));
+    const sb = supabaseBrowser();
+    for (let i = 0; i < ids.length; i += 200) {
+      const { error } = await sb.from(table).delete().in("id", ids.slice(i, i + 200));
+      if (error) { setError(error.message); if (doNotify) notify.error(error.message); load(); throw error; }
+    }
+    if (doNotify) notify.deleted(`${ids.length} × ${label}`, undefined, NO_UNDO.has(table) ? undefined : async () => {
+      for (let i = 0; i < snapshots.length; i += 200) {
+        const { error: e2 } = await supabaseBrowser().from(table).insert(snapshots.slice(i, i + 200));
+        if (e2) { notify.error(e2.message); return; }
+      }
+      setRows((cur) => sortRows([...cur.filter((r) => !ids.includes(r.id)), ...snapshots]));
+      notify.info(`${snapshots.length} × ${label} restored`);
+    });
+  }, [table, load, doNotify, label, sortRows]);
+
+  return { rows, setRows, loading, error, setError, reload: load, insert, insertMany, update, upsert, remove, removeMany };
 }

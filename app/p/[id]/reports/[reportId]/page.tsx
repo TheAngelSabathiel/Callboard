@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useProduction } from "@/components/production/ProductionProvider";
 import { ConfirmButton, ErrorNote, Field, InlineInput, PageHeader } from "@/components/ui";
 import { ExportMenu } from "@/components/export/ExportMenu";
+import { LinkChips } from "@/components/LinkChips";
 import { useRows } from "@/lib/useRows";
 import { usePresence } from "@/lib/usePresence";
 import { ATTENDANCE, TIMING_FIELDS, reportLabel, runTimes } from "@/lib/reports";
@@ -182,6 +183,7 @@ function SectionEditor({ section, editable, editors, onFocus, onSave, onDelete, 
           onChange={(e) => change(e.target.value)}
         />
       ) : <p className="whitespace-pre-wrap text-sm">{section.body || <span className="text-ink-mute">No notes.</span>}</p>}
+      <LinkChips text={text} className="mt-1" />
       <div className="mt-1 flex items-center justify-between text-[11px] text-ink-mute">
         <span>{editors.length > 0 ? `${editors.join(", ")} typing…` : updatedByName ? `Last edit: ${updatedByName}` : ""}</span>
         <span>{saving ? "Saving…" : ""}</span>

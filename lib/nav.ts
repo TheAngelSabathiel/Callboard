@@ -6,6 +6,7 @@ export const PRODUCTION_NAV: NavItem[] = [
   { href: "", label: "Overview", icon: "◎", group: "Production" },
   { href: "/company", label: "Company & Cast", icon: "☺", group: "Production" },
   { href: "/tasks", label: "Tasks", icon: "✓", group: "Production" },
+  { href: "/links", label: "Links & Media", icon: "▶", group: "Production" },
   { href: "/calendar", label: "Calendar", icon: "▦", group: "Schedule" },
   { href: "/availability", label: "Availability", icon: "◐", group: "Schedule" },
   { href: "/reports", label: "Reports", icon: "✎", group: "Reports" },

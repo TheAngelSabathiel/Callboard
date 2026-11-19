@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useProduction } from "@/components/production/ProductionProvider";
 import { Field, PageHeader } from "@/components/ui";
 import { QuickCapture, type QuickCaptureHandle } from "@/components/live/QuickCapture";
+import { LinkChips } from "@/components/LinkChips";
+import type { LinkItem } from "@/lib/types";
 import { useSchedule } from "@/lib/useSchedule";
 import { useRows } from "@/lib/useRows";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -114,6 +116,7 @@ function LivePage() {
 
         <div className="space-y-4">
           {canEdit && <RehearsalClock date={date} ensure={ensure} reportId={reportId} />}
+          <PinnedLinks base={base} />
           <AttendanceQuick people={calledToday} reportId={reportId} ensure={ensure} />
           {blocks.length > 0 && (
             <div className="card p-3">
@@ -169,6 +172,7 @@ function TodayNotes({ reportId, base }: { reportId: string | null; base: string 
             <div key={x.id} className={cx("rounded-md bg-paper p-2", x.needs_attention && "ring-1 ring-cue")}>
               <p className="text-xs font-bold">{x.title}{x.needs_attention ? " ⚑" : ""}</p>
               <p className="whitespace-pre-wrap text-xs">{x.body}</p>
+              <LinkChips text={x.body} className="mt-1" />
             </div>
           ))}
         </div>
@@ -288,6 +292,24 @@ function AttendanceQuick({ people, reportId, ensure }: { people: Member[]; repor
         </div>
       )}
       <Field label="" className="mt-1"><span className="text-[11px] text-ink-mute">Tap: Present → Late (time stamped) → Absent → Excused</span></Field>
+    </div>
+  );
+}
+
+function PinnedLinks({ base }: { base: string }) {
+  const { production } = useProduction();
+  const links = useRows<LinkItem>("links", production.id, { order: [{ column: "created_at", ascending: false }], notify: false });
+  const pinned = links.rows.filter((l) => l.pinned);
+  if (!pinned.length) return null;
+  return (
+    <div className="card p-3">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-sm font-bold">📌 Pinned links</p>
+        <Link className="text-xs underline" href={`${base}/links`}>All</Link>
+      </div>
+      <ul className="space-y-1 text-sm">
+        {pinned.slice(0, 6).map((l) => <li key={l.id}><a className="line-clamp-1 hover:underline" href={l.url} target="_blank" rel="noreferrer">{l.title || l.url}</a></li>)}
+      </ul>
     </div>
   );
 }

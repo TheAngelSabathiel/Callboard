@@ -18,20 +18,29 @@ type CellLike = { value?: unknown; text?: string; isMerged?: boolean; address?: 
 const pad = (n: number) => String(n).padStart(2, "0");
 const isoOf = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 
-export function cellText(cell: CellLike): string {
-  const v = cell?.value as unknown;
+function valueText(v: unknown): string {
   if (v === null || v === undefined) return "";
   if (v instanceof Date) return isoOf(v);
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return v.map(valueText).join("");
   if (typeof v === "object") {
-    const o = v as { result?: unknown; richText?: { text: string }[]; text?: string; hyperlink?: string; error?: string };
+    const o = v as { result?: unknown; richText?: { text: string }[]; text?: unknown; hyperlink?: string; error?: string; formula?: string; sharedFormula?: string };
     if (o.richText) return o.richText.map((r) => r.text).join("");
-    if ("result" in o) return o.result instanceof Date ? isoOf(o.result) : o.result === undefined || o.result === null ? "" : String(o.result);
-    if (o.text) return String(o.text);
-    if (o.error) return "";
+    if ("result" in o || o.formula || o.sharedFormula) return valueText(o.result);
+    if (o.hyperlink !== undefined) {
+      // hyperlink cell: keep the visible text and the URL so links survive the import
+      const label = valueText(o.text);
+      return label && label !== o.hyperlink && !label.includes(o.hyperlink) ? `${label} ${o.hyperlink}` : (label || o.hyperlink);
+    }
+    if (o.text !== undefined) return valueText(o.text);
     return "";
   }
-  if (typeof v === "number") return Number.isInteger(v) ? String(v) : String(v);
   return String(v);
+}
+
+export function cellText(cell: CellLike): string {
+  return valueText(cell?.value);
 }
 
 /** exceljs worksheet → 2D text grid (1-based columns become 0-based). */

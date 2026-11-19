@@ -286,3 +286,19 @@ export type Activity = {
   created_at: string;
   updated_at: string;
 };
+
+// ---------- Phase 11 ----------
+export type LinkItem = {
+  id: string;
+  production_id: string;
+  title: string;
+  url: string;
+  category: string;
+  scene: string | null;
+  department: string | null;
+  notes: string | null;
+  pinned: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};

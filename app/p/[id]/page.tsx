@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useProduction } from "@/components/production/ProductionProvider";
 import { PageHeader } from "@/components/ui";
 import { useRows } from "@/lib/useRows";
-import type { Report, ReportSection, Task } from "@/lib/types";
+import type { LinkItem, Report, ReportSection, Task } from "@/lib/types";
 import { reportLabel } from "@/lib/reports";
 import { useSchedule } from "@/lib/useSchedule";
 import { calledText, typeMeta } from "@/lib/schedule";
@@ -19,6 +19,8 @@ export default function Overview() {
   const sched = useSchedule(production.id);
   const reports = useRows<Report>("reports", production.id, { order: [{ column: "date", ascending: false }] });
   const flagged = useRows<ReportSection>("report_sections", production.id, { realtime: false });
+  const links = useRows<LinkItem>("links", production.id, { order: [{ column: "created_at", ascending: false }], notify: false });
+  const pinnedLinks = links.rows.filter((l) => l.pinned).slice(0, 6);
   const followUps = flagged.rows.filter((s) => s.needs_attention && s.body.trim());
   const opening = production.opening_date;
   const daysToOpen = opening ? Math.round((new Date(opening + "T00:00:00").getTime() - new Date(todayISO() + "T00:00:00").getTime()) / 86400000) : null;
@@ -50,6 +52,18 @@ export default function Overview() {
         <Stat label="Characters" value={characters.rows.length} href={`${base}/company`} />
         <Stat label="Open tasks" value={open} href={`${base}/tasks`} />
       </div>
+
+      {pinnedLinks.length > 0 && (
+        <div className="card mt-6 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="font-semibold">📌 Pinned links</p>
+            <Link href={`${base}/links`} className="text-xs underline">Links &amp; Media</Link>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {pinnedLinks.map((l) => <a key={l.id} href={l.url} target="_blank" rel="noreferrer" className="btn btn-sm max-w-xs truncate">{l.title || l.url} ↗</a>)}
+          </div>
+        </div>
+      )}
 
       <div className="card mt-6 p-4">
         <div className="mb-2 flex items-center justify-between">

@@ -119,6 +119,7 @@ export const HELP: Record<string, HelpTopic> = {
     intro: "Every cue in running order. Cues placed in the script appear here automatically.",
     tips: [
       "Filter a department and export its sheet for the operator.",
+      "Tick rows and use Delete selected to remove many cues at once (Undo available). Columns ▾ hides columns.",
       "Renumber sets a department to 1…n after cuts and additions.",
       "Mark a cue Cut instead of deleting it to keep its history.",
     ],
@@ -128,6 +129,9 @@ export const HELP: Record<string, HelpTopic> = {
     intro: "French scenes / units with who's on, entrances, exits and every department.",
     tips: [
       "Click a cell to edit; it saves when you leave the cell. ＋ inserts a row below.",
+      "Headers and the first column stay put while you scroll. ‹ › jump across columns; the number beside each title is how many rows have something there.",
+      "Columns ▾ hides columns you don't need (Hide empty removes all blank ones). Search this table filters rows.",
+      "Tick rows, or the box on an ACT bar to select the whole act, then Delete selected. Undo brings them back.",
       "Paste rows straight from your existing breakdown sheet.",
       "Scene chart uses the Characters column; use the same names as the Cast list.",
     ],
@@ -151,6 +155,19 @@ export const HELP: Record<string, HelpTopic> = {
       "Tick “Given” once notes are delivered.",
     ],
     shortcuts: [["Enter", "Save the line note"]],
+  },
+  links: {
+    title: "Links & Media",
+    intro: "One place for every rehearsal video, reference clip, playlist, Drive folder and doc of the show.",
+    tips: [
+      "Paste any link: YouTube, Vimeo, Google Drive, Docs, Sheets, Facebook, TikTok, Spotify, Dropbox, Canva or any website.",
+      "YouTube, Vimeo and Google Drive videos play right here (▶ Play). Others open in a new tab.",
+      "Tag a link with a category and a unit/page (e.g. “Unit 30”) so it's easy to find during rehearsal.",
+      "📌 Pin the ones the company needs most (latest run video, rehearsal folder). Pinned links stay on top.",
+      "Everyone in the company can add links. SMs can edit or remove any of them.",
+      "Links typed anywhere else (breakdown cells, report notes, props) also turn into clickable chips.",
+    ],
+    shortcuts: [["Ctrl/⌘ + V", "Paste a link into the URL box, then press Enter"]],
   },
   import: {
     title: "Import files",

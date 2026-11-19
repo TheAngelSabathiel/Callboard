@@ -26,6 +26,7 @@ export function activityHref(base: string, a: Activity) {
     case "scenes": return `${base}/breakdown`;
     case "props": return `${base}/props`;
     case "line_notes": return `${base}/line-notes`;
+    case "links": return `${base}/links`;
     default: return base;
   }
 }

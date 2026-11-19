@@ -2,6 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useEffect, useRef, useState } from "react";
 import { addProp } from "@/lib/capture";
+import { LinkChips } from "@/components/LinkChips";
 import { todayISO } from "@/lib/utils";
 import { useProduction } from "@/components/production/ProductionProvider";
 import { ConfirmButton, ErrorNote, Field, Tabs } from "@/components/ui";
@@ -63,7 +64,7 @@ export function LinePanel({ line, script, marks, marksApi, cues, lines, onLineCh
         <ul className="mb-3 space-y-1">
           {listed.map((m) => (
             <li key={m.id} className="flex items-start justify-between gap-2 rounded bg-paper px-2 py-1 text-xs">
-              <span><b className={m.type === "blocking" ? "text-blue-800" : m.type === "line_change" ? "text-red-700" : "text-stby"}>{m.type === "blocking" ? "Blocking" : m.type === "line_change" ? "Line change" : "Note"}:</b> {m.text}</span>
+              <span><b className={m.type === "blocking" ? "text-blue-800" : m.type === "line_change" ? "text-red-700" : "text-stby"}>{m.type === "blocking" ? "Blocking" : m.type === "line_change" ? "Line change" : "Note"}:</b> {m.text}<LinkChips text={m.text} className="mt-1" /></span>
               {canEdit && <ConfirmButton onConfirm={() => marksApi.remove(m.id)}>✕</ConfirmButton>}
             </li>
           ))}

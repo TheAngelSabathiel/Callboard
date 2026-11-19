@@ -4,7 +4,7 @@ A web app for theater stage managers: company directory, tasks, rehearsal calend
 
 Built with Next.js (App Router) and Supabase, deployed on Vercel, and works on phones.
 
-**Current build: Phase 10 · New Supabase API keys + email-free invites**
+**Current build: Phase 11 · Easier tables, batch delete, Links & Media**
 
 > **Built to update the book *during* rehearsal**, so you don't spend another hour after rehearsal cleaning up notes, props and blocking. Open **Rehearsal Mode** when the room starts. Every note, prop, line note and attendance tap lands in the right place as it happens, and the day's report is already written when you call "thank you, that's rehearsal."
 
@@ -22,8 +22,8 @@ Contents
 ### 1.1 Supabase (database + accounts)
 1. Create a free project at **supabase.com**. Pick the Singapore region if you're in the Philippines.
 2. Open **SQL Editor → New query**, paste the whole of **`supabase/callboard_schema.sql`**, and click **Run**.
-   - This one file is the **initial SQL**: every migration (0001 to 0007) in order. For a brand-new project, run only this file, once.
-   - Upgrading a project that already ran 0001 to 0006? Run just `supabase/migrations/0007_activity.sql`.
+   - This one file is the **initial SQL**: every migration (0001 to 0008) in order. For a brand-new project, run only this file, once.
+   - Already set up? Run only the newer migration files you haven't run yet, in order. The latest is `supabase/migrations/0008_links.sql`.
 3. **Authentication → URL Configuration**
    - Site URL: your Vercel address, e.g. `https://callboard-yourname.vercel.app`
    - Redirect URLs: add `https://YOUR-DOMAIN/**` and `http://localhost:3000/**`
@@ -109,6 +109,14 @@ The app only gets access to files it creates in your Drive (`drive.file`). Nothi
   - Errors stay on screen longer so you can read them.
 - **＋ Note** (floating button, bottom right): log a note, prop, line note or task from any page without leaving it.
 - **On phones**, the bottom bar has the pages used in the room: Live, Script, Props, Calendar, Reports. Everything else is under ☰.
+
+### 2.0b Working with tables (Breakdown, Cue Sheet, Props, Line Notes)
+- **Headers stay visible**: the table scrolls inside its own box, so column titles stay at the top and the first column (e.g. Act) stays on the left while you scroll across.
+- **‹ ›** buttons and shaded edges show there are more columns to the left or right. Click them to jump.
+- **Counts** next to each column title show how many rows have something in that column. Use **Columns ▾** to hide or show columns. **Hide empty** hides every column with 0, and the choice is remembered on that device.
+- **Search this table** filters rows by any text in any column.
+- **Batch delete**: tick rows (or the box on an ACT header to select the whole act, or the header box for everything shown), then **Delete selected**. **Undo** brings them back.
+- Links typed or pasted into any cell become clickable chips under the text (▶ YouTube, ▲ Drive…).
 
 ### 2.1 Rehearsal Mode (use this in the room)
 Open it from the **Overview** banner, the menu (**● Rehearsal Mode**), or a calendar day's **● Rehearsal Mode** button. Keep it open on a laptop or phone for the whole rehearsal.
@@ -252,6 +260,15 @@ Import order is always directory → availability → calendar → breakdown, so
 - During runs, log the character, page, line as written, the issue (dropped, paraphrased, wrong word…) and what was said. Filter by date and character.
 - **Send to actors** opens your email app with each actor's notes filled in (uses the email in Company & Cast). Tick *Given* when delivered. Export grouped by character.
 
+### 2.13b Links & Media
+One home for every link the company needs: rehearsal run videos, reference clips, music and playlists, design boards, Drive folders, Google Docs/Sheets.
+- **Paste a link** and press Enter. YouTube and Vimeo titles fill in automatically. Pick a category (Rehearsal video, Reference, Music, Design, Script, Drive folder, Admin, Other) and an optional unit/page.
+- **▶ Play here**: YouTube, Vimeo and Google Drive videos play inside the app. Private Drive files play only for people with access to the file. Other links open in a new tab.
+- **📌 Pin** the important ones (latest run, rehearsal folder). Pinned links show on the Overview and in Rehearsal Mode.
+- **Anyone in the company can add links.** SMs can edit or delete any link; others can edit or delete their own. Filter by category, search, and batch delete.
+- New links show in the 🔔 activity feed, so the team sees when a new run video is posted.
+- Links written anywhere else (breakdown cells, report notes, blocking notes) also become clickable chips.
+
 ### 2.14 Printing and exports
 - Every page has **Export ▾** with these options:
   - **Print / Save as PDF**: opens a clean A4 page. Use your browser's Print and choose "Save as PDF" or a printer. Landscape documents (calendar, availability, cue sheet, breakdown) set landscape automatically.
@@ -310,6 +327,8 @@ Import order is always directory → availability → calendar → breakdown, so
 | Google export does nothing | Check `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, that the Drive API is enabled, that your URL is an Authorized JavaScript origin, and that pop-ups are allowed. |
 | No pop-ups or bell updates from teammates | Run `0007_activity.sql` (included in `callboard_schema.sql`). Check *Database → Replication* has `activity` in `supabase_realtime`. Desktop alerts need *Enable desktop alerts* in the bell and browser permission. |
 | Today's notes went to the wrong date | Rehearsal Mode uses the date at the top of the page. Change it before logging, or move the text in the report editor. |
+| Cells show **[object Object]** after importing | Fixed in Phase 11: hyperlink and rich-text cells now import as text with the link kept. Re-import that sheet with **Replace the current Scene Breakdown** ticked. |
+| Breakdown rows doubled after import | Two breakdown sheets were imported (old and "upd"). Re-import only one, with *Replace* ticked, or select rows and **Delete selected**. |
 | Changes don't appear live for others | In Supabase, *Database → Replication*: make sure the `supabase_realtime` publication includes the tables (the schema file adds them). |
 
 ---
@@ -433,6 +452,25 @@ Goal: SMs update props, blocking, notes and attendance **during** rehearsal, not
 - Clear messages when the built-in sender refuses ("not authorized", rate limit)
 - README 1.1 explains the two setups: no-email (Confirm email off + invite links) or custom SMTP
 
+### ✅ Phase 11 · Easier tables, batch delete, Links & Media
+- **Tables** (Breakdown, Cue Sheet, Props, Line Notes):
+  - The header row and first column stay frozen; the table scrolls inside its own box
+  - ‹ › scroll buttons and edge shading show there are more columns
+  - Each column shows how many rows have content; Columns ▾ hides or shows columns (and can hide all empty ones), remembered per device
+  - Search across all columns
+  - Row checkboxes: select a row, a whole ACT or everything shown, then **Delete selected** with one Undo (`useRows.removeMany`)
+  - URLs in cells become clickable chips
+- **Import fixes**:
+  - Hyperlink and rich-text Excel cells no longer import as `[object Object]`, and their URLs are kept
+  - *Replace the current Scene Breakdown* option, a warning when two breakdown sheets are selected, and **Clear all rows** on the breakdown page
+- **Links & Media** (`/links`):
+  - Paste any link; YouTube/Vimeo titles fill in automatically; categories, unit/page tag, notes, pins, search, batch delete
+  - In-app player for YouTube, Vimeo and Google Drive
+  - Everyone can add links; SMs manage all of them; additions show in the activity feed
+  - Pinned links appear on the Overview and in Rehearsal Mode
+- Link chips also appear in report sections, Rehearsal Mode notes and script marks
+- Migration: `0008_links.sql`
+
 ---
 
 ## 5. Project structure
@@ -448,6 +486,7 @@ app/
     company/ tasks/ calendar/ availability/ reports/
     script/ cues/ breakdown/ props/ line-notes/
     live/                  Rehearsal Mode
+    links/                 Links & Media hub
     import/                import existing paperwork
     settings/              details, archive, leave, delete
     print/[kind]/          printable views for every export
@@ -464,16 +503,17 @@ lib/
   importApply.ts           writes import plans to the database
   capture.ts               rehearsal capture: note → report, prop, line note, task (with undo)
   notify.ts                toast bus
+  links.ts                 URL detection, labels, YouTube/Vimeo/Drive embeds
   help.ts                  text for every ? button
   export/                  doc model → print, docx, xlsx, Google Drive
   schedule.ts reports.ts scriptParse.ts types.ts roles.ts utils.ts nav.ts …
 supabase/
   callboard_schema.sql     everything in one file (fresh projects)
-  migrations/0001…0007     the same, split by phase
+  migrations/0001…0008     the same, split by phase
 middleware.ts              session refresh + auth guard
 ```
 
-### File manifest (93 files in `callboard/`)
+### File manifest (97 files in `callboard/`)
 
 ```
 .env.example
@@ -500,6 +540,7 @@ app/p/[id]/cues/page.tsx
 app/p/[id]/import/page.tsx
 app/p/[id]/layout.tsx
 app/p/[id]/line-notes/page.tsx
+app/p/[id]/links/page.tsx
 app/p/[id]/live/page.tsx
 app/p/[id]/page.tsx
 app/p/[id]/print/[kind]/page.tsx
@@ -512,6 +553,7 @@ app/p/[id]/tasks/page.tsx
 app/page.tsx
 app/signup/page.tsx
 components/EditableGrid.tsx
+components/LinkChips.tsx
 components/Toaster.tsx
 components/auth/AuthCard.tsx
 components/breakdown.tsx
@@ -539,6 +581,7 @@ lib/fetchAll.ts
 lib/help.ts
 lib/importApply.ts
 lib/importers.ts
+lib/links.ts
 lib/nav.ts
 lib/notify.ts
 lib/reports.ts
@@ -567,6 +610,7 @@ supabase/migrations/0004_script_cues_breakdown.sql
 supabase/migrations/0005_props_linenotes.sql
 supabase/migrations/0006_reuse_safety.sql
 supabase/migrations/0007_activity.sql
+supabase/migrations/0008_links.sql
 tailwind.config.ts
 tsconfig.json
 ```
