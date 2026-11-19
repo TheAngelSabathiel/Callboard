@@ -28,6 +28,7 @@ export default function ImportPage() {
   const defaultYear = Number((production.first_rehearsal ?? todayISO()).slice(0, 4));
   const [year, setYear] = useState(defaultYear);
   const [skipDates, setSkipDates] = useState(true);
+  const [replaceBreakdown, setReplaceBreakdown] = useState(true);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export default function ImportPage() {
 
   async function runWorkbook() {
     setBusy(true); setErr(null); setLog([]);
+    let firstBreakdownDone = false;
     try {
       for (const kind of ORDER) {
         for (const s of sheets.filter((x) => x.kind === kind)) {
@@ -75,7 +77,8 @@ export default function ImportPage() {
           if (kind === "directory") await applyDirectory(production.id, parseDirectory(s.grid), push);
           if (kind === "availability") await applyAvailability(production.id, parseAvailability(s.grid, year), push);
           if (kind === "calendar") await applyCalendar(production.id, parseTabularCalendar(s.grid), { skipExistingDates: skipDates, venueDefault: production.rehearsal_venue ?? undefined }, push);
-          if (kind === "breakdown") await applyBreakdown(production.id, parseBreakdown(s.grid), push);
+          if (kind === "breakdown") await applyBreakdown(production.id, parseBreakdown(s.grid), push, replaceBreakdown && !firstBreakdownDone);
+          if (kind === "breakdown") firstBreakdownDone = true;
         }
       }
       push("✓ Done. Open Company & Cast, Calendar, Availability and Breakdown to review.");
@@ -117,10 +120,18 @@ export default function ImportPage() {
                       <input className="input w-28" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
                     </Field>
                   )}
+                  {sheets.some((s) => s.kind === "breakdown") && (
+                    <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={replaceBreakdown} onChange={(e) => setReplaceBreakdown(e.target.checked)} /> Replace the current Scene Breakdown (avoids duplicate rows)</label>
+                  )}
                   {sheets.some((s) => s.kind === "calendar") && (
                     <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={skipDates} onChange={(e) => setSkipDates(e.target.checked)} /> Skip dates that already have calendar items</label>
                   )}
                 </div>
+                {sheets.filter((s) => s.kind === "breakdown").length > 1 && (
+                  <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-stby">
+                    {sheets.filter((s) => s.kind === "breakdown").length} breakdown sheets are selected ({sheets.filter((s) => s.kind === "breakdown").map((s) => s.name).join(", ")}). They're usually old and updated versions of the same breakdown, so importing both duplicates every scene. Set all but one to <b>Skip</b>.
+                  </p>
+                )}
                 <button className="btn btn-primary mt-3" disabled={busy || !sheets.some((s) => s.kind !== "skip")} onClick={runWorkbook}>{busy ? "Importing…" : "Import selected sheets"}</button>
                 <p className="mt-2 text-xs text-ink-mute">Order: directory first (so “Called” names match characters), then availability, calendar, breakdown. Month-grid calendar sheets are skipped; the tabular calendar carries the same data.</p>
               </>

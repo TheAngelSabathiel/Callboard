@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useProduction } from "@/components/production/ProductionProvider";
-import { PageHeader, Tabs } from "@/components/ui";
+import { ConfirmButton, PageHeader, Tabs } from "@/components/ui";
+import { notify } from "@/lib/notify";
 import { EditableGrid } from "@/components/EditableGrid";
 import { BREAKDOWN_COLUMNS, Matrix, sceneChartData } from "@/components/breakdown";
 import { ExportMenu } from "@/components/export/ExportMenu";
@@ -28,6 +29,16 @@ export default function BreakdownPage() {
           </>
         }
       />
+      {view === "table" && canEdit && scenes.rows.length > 0 && (
+        <div className="no-print mb-2 flex justify-end">
+          <ConfirmButton label={`Delete all ${scenes.rows.length} rows?`} onConfirm={async () => {
+            const { error } = await supabaseBrowser().from("scenes").delete().eq("production_id", production.id);
+            if (error) return notify.error(error.message);
+            scenes.setRows([]);
+            notify.deleted("Scene breakdown", `${scenes.rows.length} rows`);
+          }}>Clear all rows</ConfirmButton>
+        </div>
+      )}
       {view === "table" && (
         <EditableGrid<SceneRow>
           api={scenes}

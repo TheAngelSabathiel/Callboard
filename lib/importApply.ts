@@ -143,9 +143,14 @@ export async function applyAvailability(pid: string, plan: AvailPlan, log: Log) 
 }
 
 // ------------------------------------------------------------------ breakdown
-export async function applyBreakdown(pid: string, scenes: PlanScene[], log: Log) {
+export async function applyBreakdown(pid: string, scenes: PlanScene[], log: Log, replace = false) {
   const sb = supabaseBrowser();
-  const existing = await fetchAll<{ id: string; sort_order: number }>("scenes", "production_id", pid, "sort_order", "id,sort_order");
+  if (replace) {
+    const { error, count } = await sb.from("scenes").delete({ count: "exact" }).eq("production_id", pid);
+    if (error) throw error;
+    if (count) log(`Breakdown: removed ${count} existing rows (replace).`);
+  }
+  const existing = replace ? [] : await fetchAll<{ id: string; sort_order: number }>("scenes", "production_id", pid, "sort_order", "id,sort_order");
   const start = existing.length ? Math.max(...existing.map((s) => s.sort_order)) + 1 : 0;
   const rows = scenes.map((s, i) => ({ production_id: pid, sort_order: start + i, ...s }));
   for (const part of chunk(rows)) { const { error } = await sb.from("scenes").insert(part); if (error) throw error; }
